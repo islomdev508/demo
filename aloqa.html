@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart School | Professional Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --p: #00f2fe;
+            --bg: #010105;
+            --border: rgba(0, 242, 254, 0.2);
+            --glass: rgba(255, 255, 255, 0.03);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none;
+        }
+
+        body {
+            background: var(--bg);
+            color: #fff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* PRELOADER (3 SEKUND) */
+        #preloader {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-loader {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0, 242, 254, 0.1);
+            border-top: 4px solid var(--p);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            filter: drop-shadow(0 0 10px var(--p));
+        }
+
+        /* ASOSIY FON VA KURSOR */
+        canvas {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+        }
+
+        #aura {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 242, 254, 0.12) 0%, transparent 70%);
+            position: fixed;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+        }
+
+        #dot {
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10001;
+            box-shadow: 0 0 15px var(--p);
+            transform: translate(-50%, -50%);
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: 1s ease;
+        }
+
+        /* TO'G'IRLANGAN VA KENGAYTIRILGAN FORMA */
+        .school-form {
+            width: 100%;
+            max-width: 1300px;
+            background: var(--glass);
+            backdrop-filter: blur(40px);
+            border: 1px solid var(--border);
+            border-radius: 40px;
+            padding: 50px;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            /* 12 talik grid tizimi */
+            gap: 20px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            grid-column: span 12;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 40px;
+            font-weight: 800;
+        }
+
+        .header h1 span {
+            color: var(--p);
+            text-shadow: 0 0 20px var(--p);
+        }
+
+        /* INPUT GRUPPALARI */
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .col-4 {
+            grid-column: span 4;
+        }
+
+        /* 3 tadan joylashadi */
+        .col-6 {
+            grid-column: span 6;
+        }
+
+        /* 2 tadan joylashadi */
+        .col-12 {
+            grid-column: span 12;
+        }
+
+        /* To'liq qator */
+
+        label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--p);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            opacity: 0.8;
+        }
+
+        input,
+        select,
+        textarea {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 20px;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #fff;
+            background: rgba(0, 242, 254, 0.05);
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.15);
+            transform: translateY(-2px);
+        }
+
+        /* SELECTNI TO'G'IRLASH */
+        select option {
+            background: #0a0a0f;
+            color: #fff;
+        }
+
+        /* TUGMA */
+        .btn {
+            grid-column: span 12;
+            height: 65px;
+            background: #fff;
+            color: #000;
+            border-radius: 16px;
+            border: none;
+            font-weight: 800;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 15px;
+            transition: 0.4s;
+        }
+
+        .btn:hover {
+            background: var(--p);
+            box-shadow: 0 0 40px var(--p);
+            letter-spacing: 5px;
+        }
+
+        .btn.loading {
+            background: #333;
+            color: #666;
+            pointer-events: none;
+        }
+
+        .btn.success {
+            background: #00ff88;
+            box-shadow: 0 0 30px #00ff88;
+        }
+
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-top: 3px solid #000;
+            border-radius: 50%;
+            display: none;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .school-form {
+                grid-template-columns: 1fr;
+                padding: 30px;
+                overflow-y: auto;
+                height: 90vh;
+            }
+
+            .col-4,
+            .col-6,
+            .col-12 {
+                grid-column: span 1;
+            }
+
+            * {
+                cursor: auto !important;
+            }
+
+            #dot,
+            #aura {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="preloader">
+        <div class="main-loader"></div>
+        <div style="margin-top: 20px; letter-spacing: 3px; font-size: 12px; color: var(--p);">YUKLANMOQDA...</div>
+    </div>
+
+    <div class="container" id="mainBody">
+        <div id="dot"></div>
+        <div id="aura"></div>
+        <canvas id="bgCanvas"></canvas>
+
+        <form class="school-form" id="smartForm">
+            <div class="header">
+                <h1>SMART <span>PORTAL</span></h1>
+                <p style="opacity: 0.4; font-size: 11px; letter-spacing: 3px; margin-top: 5px;">MAKTAB RAQAMLI AXBOROT
+                    TIZIMI</p>
+            </div>
+
+            <div class="field col-4">
+                <label>To'liq Ism-Sharif</label>
+                <input type="text" placeholder="John Doe" required>
+            </div>
+            <div class="field col-4">
+                <label>Sinf yoki Guruh</label>
+                <input type="text" placeholder="Masalan: 11-A" required>
+            </div>
+            <div class="field col-4">
+                <label>Telefon Raqam</label>
+                <input type="tel" id="phone" placeholder="+998 (__) ___ __ __" required>
+            </div>
+
+            <div class="field col-6">
+                <label>Murojaat Yo'nalishi</label>
+                <select required>
+                    <option value="" disabled selected>Tanlang...</option>
+                    <option>O'quv jarayoni</option>
+                    <option>To'garaklar va Sport</option>
+                    <option>Ma'naviyat va Tadbirlar</option>
+                    <option>Texnik nosozlik</option>
+                </select>
+            </div>
+            <div class="field col-6">
+                <label>Mavzu (Qisqacha)</label>
+                <input type="text" placeholder="Murojaat sarlavhasi" required>
+            </div>
+
+            <div class="field col-12">
+                <label>Batafsil Xabar</label>
+                <textarea rows="5" placeholder="Xabaringizni bu yerga to'liq yozing..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn" id="subBtn">
+                <div class="loader" id="loader"></div>
+                <span id="btnText">Murojaatni Yuborish</span>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // PRELOADER LOGIKASI
+        window.onload = () => {
+            setTimeout(() => {
+                document.getElementById('preloader').style.display = 'none';
+                document.getElementById('mainBody').style.opacity = '1';
+                initStars();
+            }, 3000);
+        };
+
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        const dot = document.getElementById('dot');
+        const aura = document.getElementById('aura');
+        let mouse = { x: -100, y: -100 };
+
+        function initStars() {
+            let w = canvas.width = window.innerWidth;
+            let h = canvas.height = window.innerHeight;
+            let stars = Array.from({ length: 100 }, () => ({
+                x: Math.random() * w, y: Math.random() * h,
+                vx: (Math.random() - 0.5) * 0.6, vy: (Math.random() - 0.5) * 0.6
+            }));
+
+            function render() {
+                ctx.fillStyle = '#010105'; ctx.fillRect(0, 0, w, h);
+                ctx.strokeStyle = 'rgba(0, 242, 254, 0.1)'; ctx.lineWidth = 0.5;
+
+                // Grid parallax
+                for (let x = (mouse.x * 0.02) % 50; x < w; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+                for (let y = (mouse.y * 0.02) % 50; y < h; y += 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+
+                stars.forEach(s => {
+                    s.x += s.vx; s.y += s.vy;
+                    if (s.x < 0 || s.x > w) s.vx *= -1; if (s.y < 0 || s.y > h) s.vy *= -1;
+                    let dist = Math.hypot(mouse.x - s.x, mouse.y - s.y);
+                    if (dist < 150) {
+                        ctx.strokeStyle = `rgba(0, 242, 254, ${1 - dist / 150})`;
+                        ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(mouse.x, mouse.y); ctx.stroke();
+                    }
+                    ctx.fillStyle = 'rgba(0, 242, 254, 0.5)';
+                    ctx.beginPath(); ctx.arc(s.x, s.y, 1.5, 0, Math.PI * 2); ctx.fill();
+                });
+                requestAnimationFrame(render);
+            }
+            render();
+        }
+
+        window.onmousemove = (e) => {
+            mouse.x = e.clientX; mouse.y = e.clientY;
+            dot.style.left = aura.style.left = e.clientX + 'px';
+            dot.style.top = aura.style.top = e.clientY + 'px';
+        };
+
+        // FORM SUBMIT & LOADING
+        const form = document.getElementById('smartForm');
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('subBtn');
+            const loader = document.getElementById('loader');
+            const text = document.getElementById('btnText');
+
+            btn.classList.add('loading');
+            loader.style.display = 'block';
+            text.innerText = 'YUBORILMOQDA...';
+
+            setTimeout(() => {
+                loader.style.display = 'none';
+                btn.classList.remove('loading');
+                btn.classList.add('success');
+                text.innerText = 'TASDIQLANDI ✓';
+                form.reset();
+                setTimeout(() => {
+                    btn.classList.remove('success');
+                    text.innerText = 'Murojaatni Yuborish';
+                }, 3000);
+            }, 2500);
+        };
+
+        // Phone format
+        document.getElementById('phone').oninput = (e) => {
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,2})(\d{0,3})(\d{0,2})(\d{0,2})/);
+            e.target.value = !x[2] ? x[1] : '+' + x[1] + ' (' + x[2] + ') ' + x[3] + (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
+        };
+    </script>
+</body>
+
+</html>

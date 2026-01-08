@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'qituvchilar Bazasi | Pro-System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;600;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --p: #00f2fe;
+            --s: #ff00ff;
+            --bg: #020205;
+            --glass: rgba(255, 255, 255, 0.02);
+        }
+
+        /* LOADING SCREEN STYLE */
+        #loader-wrapper {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 20000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1), visibility 1s;
+        }
+
+        .loader-box {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loader-circle {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px solid transparent;
+            border-top: 2px solid var(--p);
+            border-bottom: 2px solid var(--s);
+            border-radius: 50%;
+            animation: rotateLoader 2s linear infinite;
+        }
+
+        .loader-inner {
+            width: 70%;
+            height: 70%;
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Plus Jakarta Sans';
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--p);
+            animation: pulseText 1.5s ease-in-out infinite;
+        }
+
+        .load-bar-container {
+            width: 250px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .load-bar-progress {
+            position: absolute;
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--p), var(--s));
+            box-shadow: 0 0 15px var(--p);
+            animation: barFill 3s forwards cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes rotateLoader {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulseText {
+
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+                text-shadow: 0 0 10px var(--p);
+            }
+        }
+
+        @keyframes barFill {
+            0% {
+                width: 0;
+            }
+
+            100% {
+                width: 100%;
+            }
+        }
+
+        .loaded #loader-wrapper {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* ASOSIY STIL (Sizning kodingiz) */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            cursor: none;
+        }
+
+        body {
+            background: var(--bg);
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        canvas {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        #cursor-dot {
+            width: 4px;
+            height: 4px;
+            background: #fff;
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10001;
+        }
+
+        #cursor-ring {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--p);
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transition: transform 0.1s ease-out;
+            box-shadow: 0 0 15px var(--p);
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px 20px;
+            z-index: 10;
+            position: relative;
+        }
+
+        header .count-tag {
+            font-size: 10px;
+            color: var(--s);
+            border: 1px solid var(--s);
+            padding: 2px 10px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-top: 15px;
+            letter-spacing: -1px;
+        }
+
+        .scroll-area {
+            height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .scroll-area::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .scroll-area::-webkit-scrollbar-thumb {
+            background: var(--p);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .t-card {
+            background: var(--glass);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(15px);
+            transition: 0.4s;
+        }
+
+        .t-card:hover {
+            border-color: var(--p);
+            background: rgba(0, 242, 254, 0.05);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 242, 254, 0.1);
+        }
+
+        .t-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .t-avatar {
+            width: 50px;
+            height: 50px;
+            background: #111;
+            border: 1px solid var(--p);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: var(--p);
+        }
+
+        .t-info h3 {
+            font-size: 17px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .t-info p {
+            font-size: 11px;
+            color: var(--p);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .t-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 15px;
+        }
+
+        .s-box {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .s-box span {
+            display: block;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.2;
+            font-size: 9px;
+            letter-spacing: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loader-wrapper">
+        <div class="loader-box">
+            <div class="loader-circle"></div>
+            <div class="loader-inner">TIZIMNI YUKLASH</div>
+        </div>
+        <div class="load-bar-container">
+            <div class="load-bar-progress"></div>
+        </div>
+        <p style="color: rgba(255,255,255,0.3); font-size: 9px; margin-top: 15px; letter-spacing: 2px;"
+            id="load-status">MA'LUMOTLAR SKANERLANMOQDA...</p>
+    </div>
+
+    <div id="cursor-dot"></div>
+    <div id="cursor-ring"></div>
+    <canvas id="canvas"></canvas>
+
+    <header>
+        <span class="count-tag">50 ta Ustoz Bazasi</span>
+        <h1>O'qituvchilar</h1>
+    </header>
+
+    <div class="scroll-area">
+        <div class="container" id="grid"></div>
+    </div>
+
+    <footer>CORE SYSTEM ACCESS © 2026</footer>
+
+    <script>
+        // LOADING LOGIC
+        window.addEventListener('load', () => {
+            const statusText = document.getElementById('load-status');
+
+            // Matnlarni o'zgartirib turish (Simulyatsiya)
+            setTimeout(() => { statusText.innerText = "UYALASH PORTLARI OCHILMOQDA..."; }, 1000);
+            setTimeout(() => { statusText.innerText = "GRAFIK INTERFEYS TAYYORLANMOQDA..."; }, 2000);
+
+            // 3 soniyadan keyin loadingni yopish
+            setTimeout(() => {
+                document.body.classList.add('loaded');
+            }, 3000);
+        });
+
+        // Sizning ma'lumotlaringiz
+        const teachers = [
+            { ism: "Aliyeva Mashhura", fan: "Matematika", taj: "12 yil", xona: "101" },
+            { ism: "Karimov Salohiddin", fan: "Fizika", taj: "8 yil", xona: "204" },
+            { ism: "Azimova Gulnoza", fan: "Ona tili", taj: "15 yil", xona: "103" },
+            { ism: "Usmonov Javohir", fan: "Informatika", taj: "5 yil", xona: "302" },
+            { ism: "Hoshimov Hasan", fan: "Tarix", taj: "22 yil", xona: "401" },
+            { ism: "Nuriyeva Nigora", fan: "Ingliz tili", taj: "10 yil", xona: "205" },
+            { ism: "Tursunov Po'lat", fan: "Biologiya", taj: "18 yil", xona: "206" },
+            { ism: "Eshonov Botir", fan: "Kimyo", taj: "14 yil", xona: "305" },
+            { ism: "Soliqov Komil", fan: "Geografiya", taj: "9 yil", xona: "301" },
+            { ism: "G'ulomov Otabek", fan: "Rus tili", taj: "6 yil", xona: "105" },
+            { ism: "Qodirov Davron", fan: "Adabiyot", taj: "11 yil", xona: "102" },
+            { ism: "Isayeva Lola", fan: "Fransuz tili", taj: "7 yil", xona: "202" },
+            { ism: "Valiyev Akmal", fan: "Jismoniy tarbiya", taj: "4 yil", xona: "Sport zal" },
+            { ism: "Zokirov Ravshan", fan: "Chizmachilik", taj: "13 yil", xona: "404" },
+            { ism: "Mo'minov Mansur", fan: "Astronomiya", taj: "25 yil", xona: "304" },
+            { ism: "Sodiqova Barno", fan: "Huquq", taj: "16 yil", xona: "201" },
+            { ism: "Abduvaliyev Sherzod", fan: "Musiqa", taj: "5 yil", xona: "M-Zal" },
+            { ism: "Nazarov Elyor", fan: "Iqtisodiyot", taj: "8 yil", xona: "303" },
+            { ism: "Rahimova Sevara", fan: "San'at", taj: "10 yil", xona: "405" },
+            { ism: "Yusupova Malika", fan: "Psixologiya", taj: "6 yil", xona: "Xizmat" }
+        ];
+
+        for (let i = 21; i <= 50; i++) {
+            teachers.push({
+                ism: "O'qituvchi " + i,
+                fan: "Maxsus Fan",
+                taj: (i % 15 + 2) + " yil",
+                xona: "Xona-" + (100 + i)
+            });
+        }
+
+        const grid = document.getElementById('grid');
+        teachers.forEach((t, index) => {
+            grid.innerHTML += `
+                <div class="t-card" onclick="openProfile('${t.ism}')">
+                    <div class="t-header">
+                        <div class="t-avatar">${t.ism[0]}</div>
+                        <div class="t-info">
+                            <h3>${t.ism}</h3>
+                            <p>${t.fan}</p>
+                        </div>
+                    </div>
+                    <div class="t-stats">
+                        <div class="s-box">Tajriba <span>${t.taj}</span></div>
+                        <div class="s-box">Xona <span>${t.xona}</span></div>
+                        <div class="s-box">ID <span>#T-${index + 1}</span></div>
+                        <div class="s-box">Status <span style="color: #00ff00;">ONLINE</span></div>
+                    </div>
+                </div>
+            `;
+        });
+
+        function openProfile(name) {
+            alert(name + " profili ochilmoqda...");
+        }
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let w, h, points = [], mx = 0, my = 0;
+
+        function resize() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('mousemove', e => {
+            mx = e.clientX; my = e.clientY;
+            document.getElementById('cursor-dot').style.left = mx + 'px';
+            document.getElementById('cursor-dot').style.top = my + 'px';
+            document.getElementById('cursor-ring').style.left = (mx - 20) + 'px';
+            document.getElementById('cursor-ring').style.top = (my - 20) + 'px';
+        });
+
+        function init() {
+            resize();
+            points = [];
+            for (let i = 0; i < 80; i++) {
+                points.push({
+                    x: Math.random() * w, y: Math.random() * h,
+                    vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5
+                });
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, w, h);
+            points.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy;
+                if (p.x < 0 || p.x > w) p.vx *= -1;
+                if (p.y < 0 || p.y > h) p.vy *= -1;
+                ctx.fillStyle = 'rgba(0, 242, 254, 0.4)';
+                ctx.beginPath(); ctx.arc(p.x, p.y, 1.2, 0, Math.PI * 2); ctx.fill();
+                for (let j = i + 1; j < points.length; j++) {
+                    let p2 = points[j];
+                    let d = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if (d < 180) {
+                        ctx.strokeStyle = `rgba(0, 242, 254, ${1 - d / 180})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                    }
+                }
+                let distM = Math.hypot(mx - p.x, my - p.y);
+                if (distM < 250) {
+                    ctx.strokeStyle = `rgba(255, 0, 255, ${1 - distM / 250})`;
+                    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(mx, my); ctx.stroke();
+                }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        init(); draw();
+        window.onresize = init;
+    </script>
+</body>
+
+</html>

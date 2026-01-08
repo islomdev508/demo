@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sinfxonalar Hub | Next-Gen Design</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;600;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --p: #00f2fe;
+            --s: #ff00ff;
+            --bg: #010103;
+            --card-glass: rgba(255, 255, 255, 0.03);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            cursor: none;
+        }
+
+        body {
+            background: var(--bg);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        canvas {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+        }
+
+        /* LOADER */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 20000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: 1s cubic-bezier(0.8, 0, 0.2, 1);
+        }
+
+        .loader-box {
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--p);
+            animation: rotate 2s infinite;
+        }
+
+        @keyframes rotate {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* CURSOR */
+        #cursor-dot {
+            width: 5px;
+            height: 5px;
+            background: #fff;
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10001;
+            box-shadow: 0 0 10px var(--p);
+        }
+
+        #cursor-ring {
+            width: 40px;
+            height: 40px;
+            border: 1.5px solid var(--p);
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transition: transform 0.1s ease-out;
+        }
+
+        header {
+            text-align: center;
+            padding: 80px 20px 40px;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+            background: linear-gradient(to right, #fff, var(--p));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-bottom: 50px;
+            opacity: 0;
+            transition: 1s;
+        }
+
+        .container.active {
+            opacity: 1;
+        }
+
+        .container::-webkit-scrollbar {
+            width: 0px;
+        }
+
+        /* --- YANGI KARD DIZAYNI --- */
+        .card {
+            position: relative;
+            background: var(--card-glass);
+            border: 1px solid rgba(0, 242, 254, 0.1);
+            padding: 40px 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            transition: 0.5s cubic-bezier(0.2, 1, 0.3, 1);
+            overflow: hidden;
+        }
+
+        /* Kard ustidagi nurli chiziq (Top border glow) */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--p), transparent);
+            transform: translateX(-100%);
+            transition: 0.6s;
+        }
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: rgba(0, 242, 254, 0.5);
+            background: rgba(0, 242, 254, 0.05);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 242, 254, 0.1);
+        }
+
+        .card:hover::before {
+            transform: translateX(100%);
+        }
+
+        /* Sinf nomi stili */
+        .card h2 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card h2::after {
+            content: '';
+            width: 40px;
+            height: 2px;
+            background: var(--p);
+            box-shadow: 0 0 10px var(--p);
+        }
+
+        /* Ma'lumotlar ro'yxati */
+        .info-list {
+            list-style: none;
+        }
+
+        .info-list li {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 5px;
+            transition: 0.3s;
+        }
+
+        .card:hover .info-list li {
+            color: rgba(255, 255, 255, 0.9);
+            border-bottom-color: rgba(0, 242, 254, 0.3);
+        }
+
+        .info-list li span {
+            color: var(--p);
+            font-weight: 600;
+        }
+
+        /* Burchakdagi dekorativ element */
+        .corner-decor {
+            position: absolute;
+            bottom: -10px;
+            right: -10px;
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--s);
+            border-radius: 50%;
+            opacity: 0.1;
+            transition: 0.5s;
+        }
+
+        .card:hover .corner-decor {
+            opacity: 0.8;
+            transform: scale(1.5);
+        }
+
+        footer {
+            text-align: center;
+            padding: 60px;
+            opacity: 0.2;
+            font-size: 10px;
+            letter-spacing: 5px;
+        }
+
+        /* --- RESPONSIV MOSLASHUVCHANLIK --- */
+
+        /* Planshetlar uchun (992px dan kichik) */
+        @media (max-width: 992px) {
+            header h1 {
+                font-size: 2.2rem;
+            }
+
+            .container {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 15px;
+            }
+        }
+
+        /* Telefonlar uchun (600px dan kichik) */
+        @media (max-width: 600px) {
+            * {
+                cursor: auto !important;
+            }
+
+            /* Telefonda maxsus kursorni o'chirish */
+            #cursor-dot,
+            #cursor-ring {
+                display: none;
+            }
+
+            header {
+                padding: 50px 15px 20px;
+            }
+
+            header h1 {
+                font-size: 1.8rem;
+                letter-spacing: 0;
+            }
+
+            .container {
+                grid-template-columns: 1fr;
+                /* Bitta ustun ko'rinishiga o'tadi */
+                max-height: 85vh;
+                padding: 10px;
+            }
+
+            .card {
+                padding: 25px 20px;
+            }
+
+            .card h2 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loader">
+        <div class="loader-box"></div>
+        <div class="loader-text" style="color: var(--p); margin-top: 20px; letter-spacing: 3px;">YUKLANMOQDA...</div>
+    </div>
+
+    <div id="cursor-dot"></div>
+    <div id="cursor-ring"></div>
+    <canvas id="neural-canvas"></canvas>
+
+    <header>
+        <h1>Sinfxonalar</h1>
+    </header>
+
+    <div class="container" id="main-grid"></div>
+
+    <footer>TERMINAL INTERFACE © 2026</footer>
+
+    <script>
+        const sinflar = [
+            { nomi: "5-A Sinfi", r: "M.Aliyeva", h: "Aktiv", x: "101" },
+            { nomi: "5-B Sinfi", r: "S.Karimov", h: "Aktiv", x: "102" },
+            { nomi: "6-A Sinfi", r: "G.Azimova", h: "Band", x: "103" },
+            { nomi: "6-B Sinfi", r: "B.Eshonov", h: "Aktiv", x: "105" },
+            { nomi: "7-A Sinfi", r: "J.Usmonov", h: "Aktiv", x: "201" },
+            { nomi: "7-B Sinfi", r: "A.Valiyev", h: "Aktiv", x: "202" },
+            { nomi: "8-A Sinfi", r: "R.Zokirov", h: "Aktiv", x: "204" },
+            { nomi: "8-B Sinfi", r: "N.Nuriyeva", h: "Band", x: "205" },
+            { nomi: "8-D Sinfi", r: "P.Tursunov", h: "Aktiv", x: "206" },
+            { nomi: "9-A Sinfi", r: "K.Soliqov", h: "Aktiv", x: "301" },
+            { nomi: "9-B Sinfi", r: "M.Mo'minov", h: "Aktiv", x: "302" },
+            { nomi: "10-A Sinfi", r: "O.G'ulomov", h: "Aktiv", x: "304" },
+            { nomi: "10-B Sinfi", r: "D.Qodirov", h: "Band", x: "305" },
+            { nomi: "11-A Sinfi", r: "H.Hoshimov", h: "Aktiv", x: "401" },
+            { nomi: "11-B Sinfi", r: "L.Isayeva", h: "Aktiv", x: "402" }
+        ];
+
+        const grid = document.getElementById('main-grid');
+        sinflar.forEach(s => {
+            grid.innerHTML += `
+                <div class="card">
+                    <div class="corner-decor"></div>
+                    <h2>${s.nomi}</h2>
+                    <ul class="info-list">
+                        <li>Rahbar: <span>${s.r}</span></li>
+                        <li>Holat: <span>${s.h}</span></li>
+                        <li>Xona: <span>${s.x}</span></li>
+                    </ul>
+                </div>
+            `;
+        });
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loader').style.display = "none";
+                document.getElementById('main-grid').classList.add('active');
+            }, 1500);
+        });
+
+        // BACKGROUND DYNAMICS
+        const canvas = document.getElementById('neural-canvas');
+        const ctx = canvas.getContext('2d');
+        let w, h, points = [], mx = 0, my = 0;
+
+        function resize() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('mousemove', e => {
+            mx = e.clientX; my = e.clientY;
+            document.getElementById('cursor-dot').style.left = mx + 'px';
+            document.getElementById('cursor-dot').style.top = my + 'px';
+            document.getElementById('cursor-ring').style.left = (mx - 20) + 'px';
+            document.getElementById('cursor-ring').style.top = (my - 20) + 'px';
+        });
+
+        function init() {
+            resize();
+            points = [];
+            for (let i = 0; i < 80; i++) {
+                points.push({
+                    x: Math.random() * w, y: Math.random() * h,
+                    vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4
+                });
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, w, h);
+            points.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy;
+                if (p.x < 0 || p.x > w) p.vx *= -1;
+                if (p.y < 0 || p.y > h) p.vy *= -1;
+                ctx.fillStyle = 'rgba(0, 242, 254, 0.5)';
+                ctx.beginPath(); ctx.arc(p.x, p.y, 1.2, 0, Math.PI * 2); ctx.fill();
+                for (let j = i + 1; j < points.length; j++) {
+                    let p2 = points[j];
+                    let d = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if (d < 180) {
+                        ctx.strokeStyle = `rgba(0, 242, 254, ${1 - d / 180})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                    }
+                }
+                let distM = Math.hypot(mx - p.x, my - p.y);
+                if (distM < 250) {
+                    ctx.strokeStyle = `rgba(255, 0, 255, ${1 - distM / 250})`;
+                    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(mx, my); ctx.stroke();
+                }
+            });
+            requestAnimationFrame(draw);
+        }
+
+        init(); draw();
+        window.addEventListener('resize', init);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Nebula OS | Maktab Reytingi</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;600;800&family=Orbitron:wght@500;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --p: #00f2fe;
+            --s: #7000ff;
+            --r: #ff2a6d;
+            --glass: rgba(255, 255, 255, 0.08);
+            --border: rgba(0, 242, 254, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* MULTI-STAGE LOADING SCREEN */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .load-hex {
+            width: 100px;
+            height: 100px;
+            border: 2px solid var(--p);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 30px var(--p);
+        }
+
+        .load-text {
+            font-family: 'Orbitron';
+            margin-top: 30px;
+            letter-spacing: 5px;
+            font-size: 14px;
+            color: var(--p);
+            text-transform: uppercase;
+        }
+
+        .load-bar-wrap {
+            width: 300px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .load-bar {
+            position: absolute;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--p);
+            animation: progress 2.5s forwards;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes progress {
+            to {
+                left: 0;
+            }
+        }
+
+        /* BACKGROUND EFFECTS */
+        #canvas {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: radial-gradient(circle at center, #0a0a20 0%, #000 100%);
+        }
+
+        #cursor {
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10001;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px var(--p);
+        }
+
+        /* HEADER & TITLE */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 50px;
+            text-align: center;
+            z-index: 100;
+        }
+
+        .main-title {
+            font-family: 'Orbitron';
+            font-size: 45px;
+            letter-spacing: 20px;
+            text-shadow: 0 0 40px var(--p);
+        }
+
+        /* DESKTOP LAYOUT */
+        .desktop {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            padding: 180px 100px 100px;
+            gap: 40px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .app-card {
+            background: var(--glass);
+            border: 2px solid var(--border);
+            border-radius: 50px;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(30px);
+        }
+
+        .app-card:hover {
+            transform: scale(1.05);
+            border-color: #fff;
+            box-shadow: 0 0 80px rgba(0, 242, 254, 0.3);
+            background: rgba(0, 242, 254, 0.1);
+        }
+
+        .app-card i {
+            font-size: 80px;
+            margin-bottom: 30px;
+            filter: drop-shadow(0 0 25px var(--p));
+        }
+
+        .app-card span {
+            font-family: 'Orbitron';
+            font-size: 18px;
+            letter-spacing: 5px;
+            color: var(--p);
+            font-weight: 900;
+        }
+
+        /* MODAL WINDOW */
+        .window {
+            position: fixed;
+            inset: 30px;
+            background: rgba(0, 0, 5, 0.98);
+            border: 2px solid var(--p);
+            border-radius: 60px;
+            z-index: 1000;
+            display: none;
+            grid-template-columns: 450px 1fr;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: 0.6s cubic-bezier(0.2, 1, 0.2, 1);
+        }
+
+        .window.active {
+            display: grid;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .exit-btn {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 42, 109, 0.1);
+            border: 2px solid var(--r);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--r);
+            font-size: 24px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .exit-btn:hover {
+            background: var(--r);
+            color: #fff;
+            box-shadow: 0 0 50px var(--r);
+            transform: rotate(180deg);
+        }
+
+        .sidebar {
+            padding: 60px;
+            border-right: 1px solid var(--border);
+        }
+
+        .main-view {
+            padding: 60px;
+            overflow-y: auto;
+        }
+
+        .data-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 35px;
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+
+        .chart-wrap {
+            height: 450px;
+            background: #000;
+            padding: 40px;
+            border-radius: 50px;
+            border: 2px solid var(--border);
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loader">
+        <div class="load-hex"></div>
+        <div class="load-text" id="status-text">Tizim yuklanmoqda...</div>
+        <div class="load-bar-wrap">
+            <div class="load-bar"></div>
+        </div>
+    </div>
+
+    <header>
+        <h1 class="main-title">MAKTAB REYTINGI</h1>
+    </header>
+    <canvas id="canvas"></canvas>
+    <div id="cursor"></div>
+
+    <div class="desktop">
+        <div class="app-card" onclick="openW('students')"><i>📈</i><span>O'QUVCHILAR</span></div>
+        <div class="app-card" onclick="openW('teachers')"><i>👨‍🏫</i><span>USTOZLAR</span></div>
+        <div class="app-card" onclick="openW('it')"><i>💻</i><span>IT AKADEMIYA</span></div>
+        <div class="app-card" onclick="openW('olympiad')"><i>🏅</i><span>YUTUQLAR</span></div>
+    </div>
+
+    <div id="window" class="window">
+        <div class="exit-btn" onclick="closeW()">✕</div>
+        <aside class="sidebar" id="side-in"></aside>
+        <main class="main-view">
+            <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+            <div id="grid-in" style="display:grid; grid-template-columns:1fr; gap:30px;"></div>
+        </main>
+    </div>
+
+    <script>
+        // Data
+        const db = {
+            students: { title: "O'QUVCHILAR", stats: ["Reyting: 1-o'rin", "O'rtacha: 2,980 XP"], chart: [40, 80, 60, 110, 155], items: [{ n: "Jasur Anvarov", v: "2,980 XP" }, { n: "Madina Aliyeva", v: "2,850 XP" }] },
+            teachers: { title: "USTOZLAR", stats: ["Sifat: 99.4%", "Ustozlar: 94 nafar"], chart: [85, 95, 90, 98, 99], items: [{ n: "Dr. Mahmudov A.", v: "99.1 KPI" }, { n: "Nilufar Axmedova", v: "97.5 KPI" }] },
+            it: { title: "IT CORE", stats: ["Loyihalar: 42 ta", "Node: 12 ta"], chart: [20, 55, 90, 140, 190], items: [{ n: "Web Squad", v: "15 ta Loyiha" }, { n: "AI Unit", v: "4 ta Model" }] },
+            olympiad: { title: "YUTUQLAR", stats: ["Oltin: 14 ta", "Xalqaro: 3 ta"], chart: [15, 35, 45, 40, 70], items: [{ n: "Matematika", v: "4 ta Oltin" }, { n: "Fizika", v: "2 ta Oltin" }] }
+        };
+
+        let currentChart = null;
+
+        function openW(type) {
+            const data = db[type];
+            document.getElementById('side-in').innerHTML = `<h1 style="font-family:'Orbitron'; color:var(--p); margin-bottom:50px; font-size:32px;">${data.title}</h1>` +
+                data.stats.map(s => `<div class="data-card" style="border-left:8px solid var(--p)">${s}</div>`).join('');
+            document.getElementById('grid-in').innerHTML = data.items.map(i => `<div class="data-card"><h2>${i.n}</h2><div style="font-family:'Orbitron'; font-size:35px; color:var(--p); margin-top:20px;">${i.v}</div></div>`).join('');
+
+            if (currentChart) currentChart.destroy();
+            currentChart = new Chart(document.getElementById('mainChart').getContext('2d'), {
+                type: 'line', data: { labels: ['YAN', 'FEB', 'MAR', 'APR', 'MAY'], datasets: [{ data: data.chart, borderColor: '#00f2fe', fill: true, backgroundColor: 'rgba(0,242,254,0.1)', tension: 0.4, borderWidth: 6 }] },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#fff' } }, x: { ticks: { color: '#fff' } } } }
+            });
+
+            const win = document.getElementById('window');
+            win.style.display = 'grid';
+            setTimeout(() => win.classList.add('active'), 50);
+        }
+
+        function closeW() {
+            const win = document.getElementById('window');
+            win.classList.remove('active');
+            setTimeout(() => win.style.display = 'none', 600);
+        }
+
+        // NEURAL BACKGROUND (Fluid)
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let pts = [];
+        let mouse = { x: -1000, y: -1000 };
+
+        window.onmousemove = (e) => {
+            mouse.x = e.clientX; mouse.y = e.clientY;
+            document.getElementById('cursor').style.left = mouse.x + 'px';
+            document.getElementById('cursor').style.top = mouse.y + 'px';
+        };
+
+        function init() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            pts = Array.from({ length: 110 }, () => ({
+                x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 1.2, vy: (Math.random() - 0.5) * 1.2
+            }));
+        }
+
+        function anim() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            pts.forEach(p => {
+                p.x += p.vx; p.y += p.vy;
+                let dx = mouse.x - p.x; let dy = mouse.y - p.y;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 180) {
+                    let angle = Math.atan2(dy, dx);
+                    p.x -= Math.cos(angle) * 3; p.y -= Math.sin(angle) * 3;
+                }
+                if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
+                if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
+                ctx.fillStyle = 'rgba(0, 242, 254, 0.5)';
+                ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); ctx.fill();
+                pts.forEach(p2 => {
+                    let d = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if (d < 160) {
+                        ctx.strokeStyle = `rgba(0, 242, 254, ${0.1 * (1 - d / 160)})`;
+                        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                    }
+                });
+            });
+            requestAnimationFrame(anim);
+        }
+
+        init(); anim();
+        window.onresize = init;
+
+        // LOADING LOGIC
+        window.onload = () => {
+            const status = document.getElementById('status-text');
+            const messages = ["Ma'lumotlar bazasi yuklanmoqda...", "Neyron tarmoqlar ulanmoqda...", "Tizim tayyor!"];
+            let i = 0;
+            const interval = setInterval(() => {
+                status.innerText = messages[i];
+                i++;
+                if (i >= messages.length) clearInterval(interval);
+            }, 800);
+
+            setTimeout(() => {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').remove(), 1000);
+            }, 3000);
+        };
+    </script>
+</body>
+
+</html>
